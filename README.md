@@ -2,6 +2,16 @@
 
 계획을 세우고, 세운 대로 살고!
 
+## EAS Build
+
+안드로이드 설치용 파일 빌드
+
+```
+eas build -p android --profile preview
+```
+
+https://docs.expo.dev/build-reference/apk/
+
 ## Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
