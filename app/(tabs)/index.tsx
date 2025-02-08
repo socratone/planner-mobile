@@ -2,7 +2,6 @@ import { Image, StyleSheet, Platform, Switch } from "react-native";
 import * as Notifications from "expo-notifications";
 import { useState, useEffect } from "react";
 
-import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -31,33 +30,20 @@ export default function HomeScreen() {
 
   // 알림 스케줄 설정
   async function scheduleNotifications() {
-    await Notifications.cancelAllScheduledNotificationsAsync(); // 기존 알림 모두 취소
+    // 기존 알림 모두 취소
+    // https://docs.expo.dev/versions/latest/sdk/notifications/#cancelallschedulednotificationsasync
+    await Notifications.cancelAllScheduledNotificationsAsync();
 
     if (isEnabled) {
-      // 오후 3시 알림
-      const today3PM = new Date();
-      today3PM.setHours(15, 0, 0, 0);
-
-      // 오후 8시 알림
-      const today8PM = new Date();
-      today8PM.setHours(20, 0, 0, 0);
-
-      if (today3PM.getTime() < Date.now()) {
-        today3PM.setDate(today3PM.getDate() + 1);
-      }
-      if (today8PM.getTime() < Date.now()) {
-        today8PM.setDate(today8PM.getDate() + 1);
-      }
-
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "알림",
           body: "약 먹어!",
         },
         trigger: {
-          hour: 15,
-          minute: 0,
-          repeats: true,
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: 0,
+          minute: 32,
         },
       });
 
@@ -67,9 +53,9 @@ export default function HomeScreen() {
           body: "밥 먹어!",
         },
         trigger: {
-          hour: 20,
-          minute: 0,
-          repeats: true,
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: 0,
+          minute: 40,
         },
       });
     }
