@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "name": "플래너",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
