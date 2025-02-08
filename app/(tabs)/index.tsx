@@ -6,6 +6,13 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+type Notification = {
+  title: string;
+  body?: string;
+  hour: number;
+  minute: number;
+};
+
 // 알림 설정
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,48 +25,71 @@ Notifications.setNotificationHandler({
 export default function HomeScreen() {
   const [isEnabled, setIsEnabled] = useState(false);
 
-  // 알림 권한 요청
-  async function requestPermissions() {
+  // 스위치 상태가 변경될 때마다 알림 스케줄 설정
+  useEffect(() => {
+    scheduleNotifications();
+  }, [isEnabled]);
+
+  /** 알림 권한 요청 */
+  const requestPermissions = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
       alert('알림 권한이 필요합니다!');
       return false;
     }
     return true;
-  }
+  };
 
-  // 알림 스케줄 설정
-  async function scheduleNotifications() {
-    // 기존 알림 모두 취소
-    // https://docs.expo.dev/versions/latest/sdk/notifications/#cancelallschedulednotificationsasync
-    await Notifications.cancelAllScheduledNotificationsAsync();
+  /** 평일 반복 notification */
+  const addWeekdayNotification = async ({
+    title,
+    body,
+    hour,
+    minute,
+  }: Notification) => {
+    return Promise.all(
+      // 2 ~ 6은 평일에 해당하는 number
+      [2, 3, 4, 5, 6].map((weekday) => {
+        return Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            hour,
+            minute,
+            weekday,
+          },
+        });
+      })
+    );
+  };
 
-    if (isEnabled) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '알림',
-          body: '약 먹어!',
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: 0,
-          minute: 32,
-        },
-      });
+  /** 알림 스케줄 설정 */
+  const scheduleNotifications = async () => {
+    try {
+      // 기존 알림 모두 취소
+      // https://docs.expo.dev/versions/latest/sdk/notifications/#cancelallschedulednotificationsasync
+      await Notifications.cancelAllScheduledNotificationsAsync();
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '알림',
-          body: '밥 먹어!',
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: 0,
-          minute: 40,
-        },
-      });
+      if (isEnabled) {
+        await addWeekdayNotification({
+          title: '비타민 챙겨 먹기',
+          hour: 14,
+          minute: 0,
+        });
+
+        await addWeekdayNotification({
+          title: '어머니 전화',
+          hour: 15,
+          minute: 0,
+        });
+      }
+    } catch (error: any) {
+      alert(error?.message);
     }
-  }
+  };
 
   // 스위치 상태 변경 처리
   const toggleSwitch = async () => {
@@ -68,11 +98,6 @@ export default function HomeScreen() {
       setIsEnabled((previousState) => !previousState);
     }
   };
-
-  // 스위치 상태가 변경될 때마다 알림 스케줄 설정
-  useEffect(() => {
-    scheduleNotifications();
-  }, [isEnabled]);
 
   return (
     <ParallaxScrollView
@@ -98,37 +123,15 @@ export default function HomeScreen() {
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText type="subtitle">비타민 알림</ThemedText>
         <ThemedText>
-          Edit{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{' '}
-          to see changes. Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
+          비타민을 챙겨 먹기 위한 알림 설정이 돼 있습니다.
         </ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+        <ThemedText type="subtitle">어머니 전화</ThemedText>
         <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{' '}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{' '}
-          directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+          어머니께 전화를 하기 위한 알림 설정이 돼 있습니다.
         </ThemedText>
       </ThemedView>
     </ParallaxScrollView>
