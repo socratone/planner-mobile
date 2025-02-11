@@ -1,6 +1,7 @@
 import { Button, ScrollView, StyleSheet } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -23,9 +24,32 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const STORAGE_KEY_VITAMIN = '@vitamin_time';
+const STORAGE_KEY_MOTHER_CALL = '@mother_call_time';
+
 export default function HomeScreen() {
   const [vitaminTime, setVitaminTime] = useState(['', '']);
   const [motherCallTime, setMotherCallTime] = useState(['', '']);
+
+  /** 앱 시작 시 저장된 값 로드 */
+  useEffect(() => {
+    const loadStoredTimes = async () => {
+      const storedVitaminTime = await AsyncStorage.getItem(STORAGE_KEY_VITAMIN);
+      const storedMotherCallTime = await AsyncStorage.getItem(
+        STORAGE_KEY_MOTHER_CALL
+      );
+
+      if (storedVitaminTime) {
+        setVitaminTime(JSON.parse(storedVitaminTime));
+      }
+
+      if (storedMotherCallTime) {
+        setMotherCallTime(JSON.parse(storedMotherCallTime));
+      }
+    };
+
+    loadStoredTimes();
+  }, []);
 
   /** 알림 권한 요청 */
   const requestPermissions = async () => {
@@ -86,20 +110,36 @@ export default function HomeScreen() {
         });
       }
     } catch (error: any) {
-      alert(error?.message);
+      alert(error?.message || '에러가 발생했습니다.');
     }
   };
 
   /** 설정 버튼 클릭 핸들러 */
   const handleSubmit = async () => {
-    const hasPermission = await requestPermissions();
-    if (hasPermission) {
-      scheduleNotifications();
+    try {
+      const hasPermission = await requestPermissions();
+      if (hasPermission) {
+        await scheduleNotifications();
+
+        // 상태를 AsyncStorage에 저장
+        await AsyncStorage.setItem(
+          STORAGE_KEY_VITAMIN,
+          JSON.stringify(vitaminTime)
+        );
+
+        await AsyncStorage.setItem(
+          STORAGE_KEY_MOTHER_CALL,
+          JSON.stringify(motherCallTime)
+        );
+      }
+
+      alert('저장되었습니다.');
+    } catch (error: any) {
+      alert(error?.message || '에러가 발생했습니다.');
     }
   };
 
   return (
-    // https://docs.expo.dev/versions/latest/sdk/safe-area-context/
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.scrollView}>
         <ThemedView style={styles.stepContainer}>
@@ -108,7 +148,7 @@ export default function HomeScreen() {
           <ThemedText type="subtitle">어머니 전화</ThemedText>
           <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
         </ThemedView>
-        <Button onPress={handleSubmit} title="설정" />
+        <Button onPress={handleSubmit} title="저장" />
       </ScrollView>
     </SafeAreaView>
   );
