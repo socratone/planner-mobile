@@ -1,10 +1,11 @@
-import { Button, ScrollView, StyleSheet, Switch } from 'react-native';
+import { Button, ScrollView, StyleSheet } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import TimeInput from '@/components/form/TimeInput';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Notification = {
   title: string;
@@ -25,9 +26,6 @@ Notifications.setNotificationHandler({
 export default function HomeScreen() {
   const [vitaminTime, setVitaminTime] = useState(['', '']);
   const [motherCallTime, setMotherCallTime] = useState(['', '']);
-
-  const [vitaminHour, setVitaminHour] = useState('14');
-  const [vitaminMinute, setVitaminMinute] = useState('0');
 
   /** 알림 권한 요청 */
   const requestPermissions = async () => {
@@ -101,22 +99,28 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView style={styles.scrollView}>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">비타민 알림</ThemedText>
-        <TimeInput value={vitaminTime} onChange={setVitaminTime} />
-        <ThemedText type="subtitle">어머니 전화</ThemedText>
-        <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
-        <Button onPress={handleSubmit} title="설정" />
-      </ThemedView>
-    </ScrollView>
+    // https://docs.expo.dev/versions/latest/sdk/safe-area-context/
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.scrollView}>
+        <ThemedView style={styles.stepContainer}>
+          <ThemedText type="subtitle">비타민 알림</ThemedText>
+          <TimeInput value={vitaminTime} onChange={setVitaminTime} />
+          <ThemedText type="subtitle">어머니 전화</ThemedText>
+          <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
+          <Button onPress={handleSubmit} title="설정" />
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  safeArea: {
     flex: 1,
     backgroundColor: 'rgba(161, 206, 220)',
+  },
+  scrollView: {
+    flex: 1,
   },
   stepContainer: {
     gap: 8,
