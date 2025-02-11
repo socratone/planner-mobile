@@ -107,8 +107,8 @@ export default function HomeScreen() {
           <TimeInput value={vitaminTime} onChange={setVitaminTime} />
           <ThemedText type="subtitle">어머니 전화</ThemedText>
           <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
-          <Button onPress={handleSubmit} title="설정" />
         </ThemedView>
+        <Button onPress={handleSubmit} title="설정" />
       </ScrollView>
     </SafeAreaView>
   );
@@ -117,13 +117,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'rgba(161, 206, 220)',
   },
   scrollView: {
     flex: 1,
+    padding: 10,
   },
   stepContainer: {
+    flex: 1,
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 16,
   },
 });
