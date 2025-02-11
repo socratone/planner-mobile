@@ -140,6 +140,7 @@ export default function HomeScreen() {
   };
 
   return (
+    // https://docs.expo.dev/versions/latest/sdk/safe-area-context/
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.scrollView}>
         <ThemedView style={styles.stepContainer}>
