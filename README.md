@@ -7,6 +7,12 @@
 안드로이드 설치용 파일 빌드
 
 ```
+npm run preview:android
+```
+
+or
+
+```
 eas build -p android --profile preview
 ```
 
