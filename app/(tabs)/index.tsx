@@ -1,10 +1,10 @@
-import { Image, StyleSheet, Platform, Switch } from 'react-native';
+import { Button, ScrollView, StyleSheet, Switch } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useState, useEffect } from 'react';
 
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import TimeInput from '@/components/form/TimeInput';
 
 type Notification = {
   title: string;
@@ -23,12 +23,11 @@ Notifications.setNotificationHandler({
 });
 
 export default function HomeScreen() {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [vitaminTime, setVitaminTime] = useState(['', '']);
+  const [motherCallTime, setMotherCallTime] = useState(['', '']);
 
-  // 스위치 상태가 변경될 때마다 알림 스케줄 설정
-  useEffect(() => {
-    scheduleNotifications();
-  }, [isEnabled]);
+  const [vitaminHour, setVitaminHour] = useState('14');
+  const [vitaminMinute, setVitaminMinute] = useState('0');
 
   /** 알림 권한 요청 */
   const requestPermissions = async () => {
@@ -73,17 +72,19 @@ export default function HomeScreen() {
       // https://docs.expo.dev/versions/latest/sdk/notifications/#cancelallschedulednotificationsasync
       await Notifications.cancelAllScheduledNotificationsAsync();
 
-      if (isEnabled) {
+      if (vitaminTime[0].length > 0 && vitaminTime[1].length > 0) {
         await addWeekdayNotification({
           title: '비타민 챙겨 먹기',
-          hour: 14,
-          minute: 0,
+          hour: parseInt(vitaminTime[0]),
+          minute: parseInt(vitaminTime[1]),
         });
+      }
 
+      if (motherCallTime[0].length > 0 && motherCallTime[1].length > 0) {
         await addWeekdayNotification({
           title: '어머니 전화',
-          hour: 15,
-          minute: 0,
+          hour: parseInt(motherCallTime[0]),
+          minute: parseInt(motherCallTime[1]),
         });
       }
     } catch (error: any) {
@@ -91,77 +92,34 @@ export default function HomeScreen() {
     }
   };
 
-  // 스위치 상태 변경 처리
-  const toggleSwitch = async () => {
+  /** 설정 버튼 클릭 핸들러 */
+  const handleSubmit = async () => {
     const hasPermission = await requestPermissions();
     if (hasPermission) {
-      setIsEnabled((previousState) => !previousState);
+      scheduleNotifications();
     }
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.notificationContainer}>
-        <ThemedText type="subtitle">⏰ 알림 설정</ThemedText>
-        <Switch
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
-          onValueChange={toggleSwitch}
-          value={isEnabled}
-        />
-        <ThemedText>
-          {isEnabled ? '알림이 설정되었습니다!' : '알림을 설정해주세요!'}
-        </ThemedText>
-      </ThemedView>
-
+    <ScrollView style={styles.scrollView}>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">비타민 알림</ThemedText>
-        <ThemedText>
-          비타민을 챙겨 먹기 위한 알림 설정이 돼 있습니다.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
+        <TimeInput value={vitaminTime} onChange={setVitaminTime} />
         <ThemedText type="subtitle">어머니 전화</ThemedText>
-        <ThemedText>
-          어머니께 전화를 하기 위한 알림 설정이 돼 있습니다.
-        </ThemedText>
+        <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
+        <Button onPress={handleSubmit} title="설정" />
       </ThemedView>
-    </ParallaxScrollView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'rgba(161, 206, 220)',
   },
   stepContainer: {
     gap: 8,
     marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-  notificationContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(161, 206, 220, 0.1)',
   },
 });
