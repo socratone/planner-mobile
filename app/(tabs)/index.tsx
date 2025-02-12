@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedView } from '@/components/ThemedView';
 import TimeInput from '@/components/form/TimeInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomButton from '@/components/form/CustomButton';
 
 type Notification = {
   id: string;
@@ -173,7 +174,7 @@ export default function HomeScreen() {
                     handleTitleChange(notification.id, value)
                   }
                 />
-                <Button
+                <CustomButton
                   title="삭제"
                   onPress={() => removeNotification(notification.id)}
                 />
@@ -184,9 +185,9 @@ export default function HomeScreen() {
               />
             </ThemedView>
           ))}
-          <Button title="새 알림 추가" onPress={addNotification} />
+          <CustomButton title="새 알림 추가" onPress={addNotification} />
         </ThemedView>
-        <Button onPress={handleSubmit} title="저장" />
+        <CustomButton onPress={handleSubmit} title="저장" />
       </ScrollView>
     </SafeAreaView>
   );
