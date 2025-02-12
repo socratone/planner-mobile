@@ -1,18 +1,18 @@
-import { Button, ScrollView, StyleSheet } from 'react-native';
+import { Button, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import TimeInput from '@/components/form/TimeInput';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Notification = {
+  id: string;
   title: string;
   body?: string;
-  hour: number;
-  minute: number;
+  hour: string;
+  minute: string;
 };
 
 // 알림 설정
@@ -24,31 +24,24 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const STORAGE_KEY_VITAMIN = '@vitamin_time';
-const STORAGE_KEY_MOTHER_CALL = '@mother_call_time';
+const STORAGE_KEY_NOTIFICATIONS = '@notifications';
 
 export default function HomeScreen() {
-  const [vitaminTime, setVitaminTime] = useState(['', '']);
-  const [motherCallTime, setMotherCallTime] = useState(['', '']);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   /** 앱 시작 시 저장된 값 로드 */
   useEffect(() => {
-    const loadStoredTimes = async () => {
-      const storedVitaminTime = await AsyncStorage.getItem(STORAGE_KEY_VITAMIN);
-      const storedMotherCallTime = await AsyncStorage.getItem(
-        STORAGE_KEY_MOTHER_CALL
+    const loadStoredNotifications = async () => {
+      const storedNotifications = await AsyncStorage.getItem(
+        STORAGE_KEY_NOTIFICATIONS
       );
 
-      if (storedVitaminTime) {
-        setVitaminTime(JSON.parse(storedVitaminTime));
-      }
-
-      if (storedMotherCallTime) {
-        setMotherCallTime(JSON.parse(storedMotherCallTime));
+      if (storedNotifications) {
+        setNotifications(JSON.parse(storedNotifications));
       }
     };
 
-    loadStoredTimes();
+    loadStoredNotifications();
   }, []);
 
   /** 알림 권한 요청 */
@@ -67,7 +60,7 @@ export default function HomeScreen() {
     body,
     hour,
     minute,
-  }: Notification) => {
+  }: Omit<Notification, 'id'>) => {
     return Promise.all(
       // 2 ~ 6은 평일에 해당하는 number
       [2, 3, 4, 5, 6].map((weekday) => {
@@ -78,8 +71,8 @@ export default function HomeScreen() {
           },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-            hour,
-            minute,
+            hour: Number(hour),
+            minute: Number(minute),
             weekday,
           },
         });
@@ -94,21 +87,11 @@ export default function HomeScreen() {
       // https://docs.expo.dev/versions/latest/sdk/notifications/#cancelallschedulednotificationsasync
       await Notifications.cancelAllScheduledNotificationsAsync();
 
-      if (vitaminTime[0].length > 0 && vitaminTime[1].length > 0) {
-        await addWeekdayNotification({
-          title: '비타민 챙겨 먹기',
-          hour: parseInt(vitaminTime[0]),
-          minute: parseInt(vitaminTime[1]),
-        });
-      }
-
-      if (motherCallTime[0].length > 0 && motherCallTime[1].length > 0) {
-        await addWeekdayNotification({
-          title: '어머니 전화',
-          hour: parseInt(motherCallTime[0]),
-          minute: parseInt(motherCallTime[1]),
-        });
-      }
+      await Promise.all(
+        notifications.map(({ title, hour, minute }) =>
+          addWeekdayNotification({ title, hour, minute })
+        )
+      );
     } catch (error: any) {
       alert(error?.message || '에러가 발생했습니다.');
     }
@@ -123,13 +106,8 @@ export default function HomeScreen() {
 
         // 상태를 AsyncStorage에 저장
         await AsyncStorage.setItem(
-          STORAGE_KEY_VITAMIN,
-          JSON.stringify(vitaminTime)
-        );
-
-        await AsyncStorage.setItem(
-          STORAGE_KEY_MOTHER_CALL,
-          JSON.stringify(motherCallTime)
+          STORAGE_KEY_NOTIFICATIONS,
+          JSON.stringify(notifications)
         );
       }
 
@@ -139,15 +117,74 @@ export default function HomeScreen() {
     }
   };
 
+  /** 새 알림 추가 */
+  const addNotification = () => {
+    setNotifications((prevState) => [
+      ...prevState,
+      { id: Date.now().toString(), title: '', hour: '', minute: '' },
+    ]);
+  };
+
+  /** 알림 삭제 */
+  const removeNotification = (id: string) => {
+    setNotifications((prevState) =>
+      prevState.filter((notification) => notification.id !== id)
+    );
+  };
+
+  const handleTitleChange = (id: string, title: string) => {
+    setNotifications((prevState) =>
+      prevState.map((notification) =>
+        notification.id === id ? { ...notification, title } : notification
+      )
+    );
+  };
+
+  const handleTimeChange = (id: string, time: string[]) => {
+    setNotifications((prevState) =>
+      prevState.map((notification) =>
+        notification.id === id
+          ? {
+              ...notification,
+              hour: time[0],
+              minute: time[1],
+            }
+          : notification
+      )
+    );
+  };
+
   return (
     // https://docs.expo.dev/versions/latest/sdk/safe-area-context/
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.scrollView}>
         <ThemedView style={styles.stepContainer}>
-          <ThemedText type="subtitle">비타민 알림</ThemedText>
-          <TimeInput value={vitaminTime} onChange={setVitaminTime} />
-          <ThemedText type="subtitle">어머니 전화</ThemedText>
-          <TimeInput value={motherCallTime} onChange={setMotherCallTime} />
+          {notifications.map((notification) => (
+            <ThemedView
+              key={notification.id}
+              style={styles.notificationContainer}
+            >
+              <View style={styles.titleInputContainer}>
+                <TextInput
+                  style={styles.titleInput}
+                  placeholder="알림 제목"
+                  value={notification.title}
+                  onChangeText={(value) =>
+                    handleTitleChange(notification.id, value)
+                  }
+                />
+                <Button
+                  title="삭제"
+                  onPress={() => removeNotification(notification.id)}
+                />
+              </View>
+              <TimeInput
+                value={[notification.hour, notification.minute]}
+                onChange={(time) => handleTimeChange(notification.id, time)}
+              />
+            </ThemedView>
+          ))}
+          <Button title="새 알림 추가" onPress={addNotification} />
         </ThemedView>
         <Button onPress={handleSubmit} title="저장" />
       </ScrollView>
@@ -167,5 +204,19 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 8,
     marginBottom: 16,
+  },
+  notificationContainer: {
+    marginBottom: 10,
+    gap: 8,
+  },
+  titleInputContainer: { flexDirection: 'row', gap: 8 },
+  titleInput: {
+    flex: 1,
+    borderRadius: 8,
+    height: 48,
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    color: 'white',
   },
 });
