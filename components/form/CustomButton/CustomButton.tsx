@@ -4,11 +4,12 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 interface CustomButtonProps {
   title: string;
   onPress: () => void;
+  width?: number;
 }
 
-const CustomButton = ({ title, onPress }: CustomButtonProps) => {
+const CustomButton = ({ title, onPress, width }: CustomButtonProps) => {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
+    <TouchableOpacity style={{ ...styles.button, width }} onPress={onPress}>
       <Text style={styles.buttonText}>{title}</Text>
     </TouchableOpacity>
   );

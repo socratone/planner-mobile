@@ -160,7 +160,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.scrollView}>
         <ThemedView style={styles.stepContainer}>
-          <CustomButton onPress={handleSubmit} title="저장" />
           {notifications.map((notification) => (
             <ThemedView
               key={notification.id}
@@ -187,9 +186,12 @@ export default function HomeScreen() {
               />
             </ThemedView>
           ))}
-          <CustomButton title="새 알림 추가" onPress={addNotification} />
         </ThemedView>
       </ScrollView>
+      <View style={styles.footer}>
+        <CustomButton title="새 알림 추가" onPress={addNotification} />
+        <CustomButton onPress={handleSubmit} title="저장" width={80} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -200,7 +202,14 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: 10,
+    padding: 8,
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderColor: 'gray',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 8,
   },
   stepContainer: {
     flex: 1,
